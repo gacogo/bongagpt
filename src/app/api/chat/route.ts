@@ -2,23 +2,9 @@ import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 
 
-export async function POST(request: NextRequest) {
-  
-  const controller = new AbortController();
+export async function GET(request: NextRequest) {
+  const message =  request.body;
 
-  await sleep(1000, controller);
-
-  setTimeout(() => {
-    controller.abort();
-  });
-
-  return Promise.resolve(Response.json({ messages: [] }));
+  return Response.json({message: message})
 }
 
-function sleep(ms: number, contoller) {
-  return new Promise((resolve, reject) => {
-    setTimeout(( ) => {
-      resolve();
-    }, ms);
-  })
-}
