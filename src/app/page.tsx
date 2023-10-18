@@ -1,12 +1,12 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, KeyboardEvent, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type MessageContent = string;
 
-type MessageKind = "QUESTION" | "ANSWER";
+type MessageKind = "QUESTION" | "ANSWER" | "EXCEPTION";
 
 type MessageKey = number;
 
@@ -45,8 +45,9 @@ const createQuestion = (content: MessageContent): Message =>
 const createAnswer = (content: MessageContent): Message =>
   createMessage(content, "ANSWER");
 
-{
-}
+const createExceptionMessage = (content: MessageContent): Message =>
+  createMessage(content, "EXCEPTION");
+
 const addQuestion = (
   content: MessageContent,
   messages: Message[]
@@ -60,6 +61,14 @@ const addAnswer = (content: MessageContent, messages: Message[]): Message[] => {
   return [...messages, withId(nextMessageId++, newAnswer)];
 };
 
+const addExceptionMessage = (
+  content: MessageContent,
+  messages: Message[]
+): Message[] => {
+  const newException = createExceptionMessage(content);
+  return [...messages, withId(nextMessageId++, newException)];
+};
+
 const updateMessage = <T extends Message>(
   message: T,
   updater: (message: T) => T
@@ -71,7 +80,6 @@ const defaultQuestion = createQuestion("Questions on this side");
 const defaultAnswer = createAnswer("Answers on this side");
 const messages: Message[] = [];
 
-console.log(messages);
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     withId(nextMessageId++, defaultQuestion),
@@ -79,30 +87,34 @@ export default function Home() {
   ]);
 
   const [question, setQuestion] = useState<string>("");
+
   const onInput = (event: ChangeEvent<HTMLInputElement>) => {
     console.log(`event is %s`, event.target.value);
     setQuestion(event.target.value);
   };
+
+  const handleKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      onSubmit();
+    }
+  };
+
   const onSubmit = async () => {
-    setMessages((oldMessages) => [
-      ...oldMessages,
-      { id: Date.now(), content: question, kind: "QUESTION" },
-    ]);
+    if (question.trim() !== "") {
+      setMessages((oldMessages) => addQuestion(question, oldMessages));
+      setQuestion("");
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          message: question,
+        }),
+      });
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        message: question,
-      }),
-    });
-
-    const { message: answer } = await response.json();
-    setMessages((oldMessages) => [
-      ...oldMessages,
-      { id: Date.now(), content: answer, kind: "ANSWER" },
-    ]);
-
-    console.log(answer);
+      const { message: answer } = await response.json();
+      setMessages((oldMessages) => addAnswer(answer, oldMessages));
+    }
+    setMessages((oldMessages) => addExceptionMessage("No input", oldMessages));
+    //console.log(messages)
   };
 
   return (
@@ -118,7 +130,12 @@ export default function Home() {
         ))}
       </div>
       <div className="flex gap-2">
-        <Input type="text" value={question} onChange={onInput} />
+        <Input
+          type="text"
+          value={question}
+          onChange={onInput}
+          onKeyUp={handleKeyUp}
+        />
         <Button variant="outline" className="px-8" onClick={onSubmit}>
           Send
         </Button>
