@@ -1,15 +1,10 @@
 import { useState } from "react";
 
-let nextMessageId = 1;
-
 const createMessage = (content: string, kind: MessageKind): Message => ({
-  id: nextMessageId,
+  id: 0,
   content,
   kind,
 });
-
-const withId = <T extends Message>(value: T): T =>
-  ({ ...value, id: nextMessageId++ } as T);
 
 const createQuestion = (content: MessageContent): Message =>
   createMessage(content, "QUESTION");
@@ -21,28 +16,61 @@ const createExceptionMessage = (content: MessageContent): Message =>
   createMessage(content, "EXCEPTION");
 
 export const useMessages = () => {
+  let messageId = 0;
   const defaultQuestion = createQuestion("Question Thread");
   const defaultAnswer = createAnswer("Answer Thread");
+
+  const withId = <T extends Message>(value: T): T =>
+    ({ ...value, id: messageId++ } as T);
 
   const [messages, setMessages] = useState<Message[]>([
     withId(defaultQuestion),
     withId(defaultAnswer),
   ]);
 
-  const addQuestion = (content: MessageContent) => {
-    const newQuestion = createQuestion(content);
-    setMessages((oldMessages) => [...oldMessages, withId(newQuestion)]);
-  };
+  const addMessage = (
+    createMessagefunc: (content: MessageContent) => Message,
+    content: MessageContent
+  ) =>
+    setMessages((oldMessages) => [
+      ...oldMessages,
+      withId(createMessagefunc(content)),
+    ]);
 
-  const addAnswer = (content: MessageContent) => {
-    const newAnswer = createAnswer(content);
-    setMessages((oldMessages) => [...oldMessages, withId(newAnswer)]);
-  };
+  const addQuestion = (content: MessageContent) =>
+    addMessage(createQuestion, content);
+
+  const addAnswer = (content: MessageContent) =>
+    addMessage(createAnswer, content);
   //todo default exception?
-  const addExceptionMessage = (content: MessageContent) => {
-    const newException = createExceptionMessage(content);
-    setMessages((oldMessages) => [...oldMessages, withId(newException)]);
+  const addExceptionMessage = (content: MessageContent) =>
+    addMessage(createExceptionMessage, content);
+
+  return {
+    messages,
+    addMessage,
+    setMessages,
+    addQuestion,
+    addAnswer,
+    addExceptionMessage,
+    defaultQuestion,
+    defaultAnswer,
+  };
+};
+
+export const useLocalStorage = (key: string, initialValue: any) => {
+  const [storedValue, setStoredValue] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedValue = window.localStorage.getItem(key);
+      return savedValue ? JSON.parse(savedValue) : initialValue;
+    }
+    return initialValue;
+  });
+
+  const setValue = (value: any) => {
+    setStoredValue(value);
+    window.localStorage.setItem(key, JSON.stringify(value));
   };
 
-  return { messages, addQuestion, addAnswer, addExceptionMessage };
+  return [storedValue, setValue];
 };

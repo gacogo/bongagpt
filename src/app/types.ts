@@ -2,7 +2,8 @@ type MessageContent = string;
 type MessageKind = "QUESTION" | "ANSWER" | "EXCEPTION";
 type MessageKey = number;
 
-interface Message {
+type Message =
+{
     id: MessageKey;
     content: MessageContent;
     kind: MessageKind;

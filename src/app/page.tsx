@@ -1,32 +1,33 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChangeEvent, KeyboardEvent, useState } from "react";
+import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { WithAlertComponent } from "@/app/utils/components";
-import { useMessages } from "@/app/utils/hooks";
+import { useMessages, useLocalStorage } from "@/app/utils/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
-{
-  /**
-   return savedMessages
-      ? JSON.parse(savedMessages)
-      : [withId(defaultQuestion), withId(defaultAnswer)];
-  });
 
+export default function Home() {
+  const { messages, setMessages, addQuestion, addAnswer, addExceptionMessage } =
+    useMessages();
+
+  const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
+    "messages",
+    [messages]
+  );
   useEffect(() => {
-    localStorage.setItem('messages', JSON.stringify(messages));
+    setLocalStorageMessages(messages);
   }, [messages]);
 
-*/
-}
-export default function Home() {
-  const { messages, addQuestion, addAnswer, addExceptionMessage } =
-    useMessages();
+  useEffect(() => {
+    setMessages(localStorageMessages);
+  }, []);
+
   const [loading, setLoading] = useState<Boolean>(false);
   const [question, setQuestion] = useState<string>("");
-  const [exception, setException] = useState<string>("");
+  //const [exception, setException] = useState<string>("");
+
   const onInput = (event: ChangeEvent<HTMLInputElement>) => {
-    console.log(`event is %s`, event.target.value);
     setQuestion(event.target.value);
   };
 
@@ -56,7 +57,7 @@ export default function Home() {
         const errorMessage = String(error);
         addExceptionMessage(errorMessage);
       }
-      //console.log(messages)
+      console.log(messages);
     } else {
       addExceptionMessage("No input");
     }
