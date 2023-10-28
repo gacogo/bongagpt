@@ -15,7 +15,7 @@ export default function Home() {
     useMessages();
 
   const userQuery = trpc.getUser.useQuery();
-
+  const messagesQuery = trpc.getMessages.useQuery();
   // const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
   //   'messages',
   //   [messages]
@@ -69,24 +69,23 @@ export default function Home() {
         )}
       </div>
       <div className='flex flex-grow flex-col border-zinc border-2 rounded p-10'>
-        {messages.map((message) =>
-          message.kind === 'EXCEPTION' ? (
-            <WithAlertComponent
-              message={message.content}
-              description='How can I help you today'
-              key={message.id}
-            />
-          ) : (
-            <div
-              className={cn('flex rounded p-2', {
-                'justify-end border': message.kind === 'ANSWER',
-              })}
-              key={message.id}
-            >
-              {message.content}
-            </div>
-          )
-        )}
+        {messagesQuery.data?.map((message) => (
+          // message.kind === 'EXCEPTION' ? (
+          //   <WithAlertComponent
+          //     message={message.content}
+          //     description='How can I help you today'
+          //     key={message.id}
+          //   />
+          // ) : (
+          <div
+            className={cn('flex rounded p-2', {
+              'justify-end border': message.kind === 'ANSWER',
+            })}
+            key={message.id}
+          >
+            {message.content}
+          </div>
+        ))}
         {postQuestionMutation.isLoading && (
           <Skeleton className='h-4 rounded-full' />
         )}
