@@ -1,83 +1,85 @@
-"use client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
-import { WithAlertComponent } from "@/app/utils/components";
-import { useMessages, useLocalStorage } from "@/app/utils/hooks";
-import { Skeleton } from "@/components/ui/skeleton";
+'use client';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { WithAlertComponent } from '@/app/utils/components';
+import { useMessages, useLocalStorage } from '@/app/utils/hooks';
+import { Skeleton } from '@/components/ui/skeleton';
+import { trpc } from '@/trpc/client/trpc-client';
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+import Link from 'next/link';
 
 export default function Home() {
   const { messages, setMessages, addQuestion, addAnswer, addExceptionMessage } =
     useMessages();
 
-  const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
-    "messages",
-    [messages]
-  );
-  useEffect(() => {
-    setLocalStorageMessages(messages);
-  }, [messages]);
+  const userQuery = trpc.getUser.useQuery();
 
-  useEffect(() => {
-    setMessages(localStorageMessages);
-  }, []);
+  // const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
+  //   'messages',
+  //   [messages]
+  // );
+  // useEffect(() => {
+  //   setLocalStorageMessages(messages);
+  // }, [messages]);
 
-  const [loading, setLoading] = useState<Boolean>(false);
-  const [question, setQuestion] = useState<string>("");
-  //const [exception, setException] = useState<string>("");
+  // useEffect(() => {
+  //   setMessages(localStorageMessages);
+  // }, []);
 
+  const [question, setQuestion] = useState<string>('');
   const onInput = (event: ChangeEvent<HTMLInputElement>) => {
     setQuestion(event.target.value);
   };
 
   const handleKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
+    if (event.key === 'Enter') {
       onSubmit();
     }
   };
-
+  const postQuestionMutation = trpc.postQuestion.useMutation({
+    onSuccess({ answer }) {
+      addAnswer(answer);
+      console.log(answer);
+    },
+  });
   const onSubmit = async () => {
-    if (question.trim() !== "") {
+    if (question.trim() !== '') {
       addQuestion(question);
-      setQuestion("");
-
-      setLoading(true);
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          body: JSON.stringify({
-            message: question,
-          }),
-        });
-
-        const { message: answer } = await response.json();
-        addAnswer(answer);
-      } catch (error) {
-        const errorMessage = String(error);
-        addExceptionMessage(errorMessage);
-      }
-      console.log(messages);
-    } else {
-      addExceptionMessage("No input");
+      setQuestion('');
+      postQuestionMutation.mutate({ question });
     }
-    setLoading(false);
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-4 gap-2">
-      <div className="flex flex-grow flex-col border-zinc border-2 rounded p-10">
+    <div className='flex flex-col min-h-screen p-4 gap-2'>
+      <div className='flex justify-end'>
+        {userQuery?.data ? (
+          <div>
+            {userQuery.data.name}
+            <Button asChild>
+              <Link href='/session/signout'>Sign Out</Link>
+            </Button>
+          </div>
+        ) : (
+          <Button asChild>
+            <Link href='/session/signin'>Sign In</Link>
+          </Button>
+        )}
+      </div>
+      <div className='flex flex-grow flex-col border-zinc border-2 rounded p-10'>
         {messages.map((message) =>
-          message.kind === "EXCEPTION" ? (
+          message.kind === 'EXCEPTION' ? (
             <WithAlertComponent
               message={message.content}
-              description="How can I help you today"
+              description='How can I help you today'
               key={message.id}
             />
           ) : (
             <div
-              className={cn("flex rounded p-2", {
-                "justify-end border": message.kind === "ANSWER",
+              className={cn('flex rounded p-2', {
+                'justify-end border': message.kind === 'ANSWER',
               })}
               key={message.id}
             >
@@ -85,16 +87,18 @@ export default function Home() {
             </div>
           )
         )}
-        {loading && <Skeleton className="h-4 rounded-full" />}
+        {postQuestionMutation.isLoading && (
+          <Skeleton className='h-4 rounded-full' />
+        )}
       </div>
-      <div className="flex gap-2">
+      <div className='flex gap-2'>
         <Input
-          type="text"
+          type='text'
           value={question}
           onChange={onInput}
           onKeyUp={handleKeyUp}
         />
-        <Button variant="outline" className="px-8" onClick={onSubmit}>
+        <Button variant='outline' className='px-8' onClick={onSubmit}>
           Send
         </Button>
       </div>

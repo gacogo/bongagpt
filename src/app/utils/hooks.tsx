@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 const createMessage = (content: string, kind: MessageKind): Message => ({
   id: 0,
@@ -7,21 +7,21 @@ const createMessage = (content: string, kind: MessageKind): Message => ({
 });
 
 const createQuestion = (content: MessageContent): Message =>
-  createMessage(content, "QUESTION");
+  createMessage(content, 'QUESTION');
 
 const createAnswer = (content: MessageContent): Message =>
-  createMessage(content, "ANSWER");
+  createMessage(content, 'ANSWER');
 
 const createExceptionMessage = (content: MessageContent): Message =>
-  createMessage(content, "EXCEPTION");
+  createMessage(content, 'EXCEPTION');
 
 export const useMessages = () => {
   let messageId = 0;
-  const defaultQuestion = createQuestion("Question Thread");
-  const defaultAnswer = createAnswer("Answer Thread");
+  const defaultQuestion = createQuestion('Question Thread');
+  const defaultAnswer = createAnswer('Answer Thread');
 
   const withId = <T extends Message>(value: T): T =>
-    ({ ...value, id: messageId++ } as T);
+    ({ ...value, id: Date.now() } as T);
 
   const [messages, setMessages] = useState<Message[]>([
     withId(defaultQuestion),
@@ -60,7 +60,7 @@ export const useMessages = () => {
 
 export const useLocalStorage = (key: string, initialValue: any) => {
   const [storedValue, setStoredValue] = useState(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const savedValue = window.localStorage.getItem(key);
       return savedValue ? JSON.parse(savedValue) : initialValue;
     }
