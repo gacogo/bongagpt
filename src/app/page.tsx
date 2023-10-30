@@ -16,6 +16,14 @@ export default function Home() {
 
   const userQuery = trpc.getUser.useQuery();
   const messagesQuery = trpc.getMessages.useQuery();
+  const postQuestionMutation = trpc.postQuestion.useMutation({
+    onSuccess({ answer }) {
+      // addAnswer(answer);
+      // console.log(answer);
+      messagesQuery.refetch();
+    },
+  });
+
   // const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
   //   'messages',
   //   [messages]
@@ -38,12 +46,7 @@ export default function Home() {
       onSubmit();
     }
   };
-  const postQuestionMutation = trpc.postQuestion.useMutation({
-    onSuccess({ answer }) {
-      addAnswer(answer);
-      console.log(answer);
-    },
-  });
+
   const onSubmit = async () => {
     if (question.trim() !== '') {
       addQuestion(question);
