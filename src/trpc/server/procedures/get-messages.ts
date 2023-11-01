@@ -1,38 +1,44 @@
 import { db } from '@/lib/db';
-import { privateProcedure, publicProcedure } from '@/trpc/server/trpc';
+import { privateProcedure } from '@/trpc/server/trpc';
 import { z } from 'zod';
-
-export enum MessageType {
-  QUESTION = 'QUESTION',
-  ANSWER = 'ANSWER',
-}
 
 export const getMessages = privateProcedure
   .output(
     z.array(
       z.object({
         id: z.number(),
-        kind: z.enum([MessageType.QUESTION, MessageType.ANSWER]),
-        content: z.string(),
+        question: z.string(),
         createdAt: z.date(),
+        answers: z.array(
+          z.object({
+            id: z.number(),
+            content: z.string(),
+            createdAt: z.date(),
+          })
+        ),
       })
     )
   )
   .query(async (opts) => {
-    const messages = await db.message.findMany({
+    const qAndA = await db.question.findMany({
       where: {
         userId: opts.ctx.userId,
       },
+      include: {
+        answers: true,
+      },
     });
-    return messages.map((message) => {
+    return qAndA.map((question) => {
       return {
-        id: message.id,
-        kind:
-          message.kind === 'QUESTION'
-            ? MessageType.QUESTION
-            : MessageType.ANSWER,
-        content: message.content,
-        createdAt: message.createdAt,
+        id: question.id,
+        question: question.content,
+        createdAt: question.createdAt,
+        answers: question.answers.map((answer) => ({
+          id: answer.id,
+          content: answer.content,
+          createdAt: answer.createdAt,
+          userId: answer.userId,
+        })),
       };
     });
   });

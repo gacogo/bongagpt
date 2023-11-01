@@ -3,39 +3,23 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { WithAlertComponent } from '@/app/utils/components';
 import { useMessages, useLocalStorage } from '@/app/utils/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { trpc } from '@/trpc/client/trpc-client';
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import Link from 'next/link';
-import { MessageType} from '@/trpc/server/procedures/get-messages';
 
 export default function Home() {
-  const { messages, setMessages, addQuestion, addAnswer, addExceptionMessage } =
-    useMessages();
+  const { addQuestion, addAnswer } = useMessages();
 
   const userQuery = trpc.getUser.useQuery();
   const messagesQuery = trpc.getMessages.useQuery();
   const postQuestionMutation = trpc.postQuestion.useMutation({
     onSuccess({ answer }) {
       // addAnswer(answer);
-      // console.log(answer);
+      console.log(answer);
       messagesQuery.refetch();
     },
   });
-
-  // const [localStorageMessages, setLocalStorageMessages] = useLocalStorage(
-  //   'messages',
-  //   [messages]
-  // );
-  // useEffect(() => {
-  //   setLocalStorageMessages(messages);
-  // }, [messages]);
-
-  // useEffect(() => {
-  //   setMessages(localStorageMessages);
-  // }, []);
 
   const [question, setQuestion] = useState<string>('');
   const onInput = (event: ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +36,7 @@ export default function Home() {
     if (question.trim() !== '') {
       addQuestion(question);
       setQuestion('');
-      postQuestionMutation.mutate({question});
+      postQuestionMutation.mutate({ question });
     }
   };
 
@@ -72,24 +56,27 @@ export default function Home() {
           </Button>
         )}
       </div>
-      <div className='flex flex-grow flex-col border-zinc border-2 rounded p-10'>
+      <div className='flex flex-grow flex-col gap border-zinc border-2 rounded p-10'>
         {messagesQuery.data?.map((message) => (
-          // message.kind === 'EXCEPTION' ? (
-          //   <WithAlertComponent
-          //     message={message.content}
-          //     description='How can I help you today'
-          //     key={message.id}
-          //   />
-          // ) : (
           <div
-            className={cn('flex rounded p-2', {
-              'justify-end border': message.kind === 'ANSWER',
-            })}
+            className={cn('flex flex-col rounded p-2 gap-4')}
             key={message.id}
           >
-            {message.content}
+            <div className={cn('self-start bg-gray-700 p-2 rounded')}>
+              {message.question}
+            </div>
+            {message.answers.map((answer) => (
+              <div
+                className={cn('flex bg-gray-700 p-4 justify-end border gap-2')}
+                key={answer.id}
+              >
+                {' '}
+                {answer.content}{' '}
+              </div>
+            ))}
           </div>
         ))}
+
         {postQuestionMutation.isLoading && (
           <Skeleton className='h-4 rounded-full' />
         )}
