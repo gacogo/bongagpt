@@ -4,7 +4,7 @@ import { createTRPCReact, httpBatchLink } from '@trpc/react-query';
 import { absoluteUrl } from '@/lib/utils';
 
 import { PropsWithChildren } from 'react';
-import type { AppRouter } from '../server/router';
+import type { AppRouter } from '@/trpc/server/router';
 import { QUERY_CLIENT } from '@/query/query-client';
 
 export const trpc = createTRPCReact<AppRouter>({});

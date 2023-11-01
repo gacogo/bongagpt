@@ -18,6 +18,7 @@
     "@trpc/client": "^10.43.0",
     "@trpc/react-query": "^10.43.0",
     "@trpc/server": "^10.43.0",
+    "@vercel/postgres": "^0.5.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "husky": "^8.0.3",

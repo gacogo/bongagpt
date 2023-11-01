@@ -17,5 +17,8 @@ model Message {
   content String
   createdAt DateTime @default(now())
   userId  String
-
+  questionId Int? @unique
+  answerId Int? @unique
+  question Message? @relation("QuestionAnswers", fields: [questionId], references: [id])
+  answer Message? @relation("QuestionAnswers")
 }

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { trpc } from '@/trpc/client/trpc-client';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import Link from 'next/link';
+import { MessageType} from '@/trpc/server/procedures/get-messages';
 
 export default function Home() {
   const { messages, setMessages, addQuestion, addAnswer, addExceptionMessage } =
@@ -51,7 +52,7 @@ export default function Home() {
     if (question.trim() !== '') {
       addQuestion(question);
       setQuestion('');
-      postQuestionMutation.mutate({ question });
+      postQuestionMutation.mutate({question});
     }
   };
 

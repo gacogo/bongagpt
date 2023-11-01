@@ -2,36 +2,39 @@ import { privateProcedure, publicProcedure } from '@/trpc/server/trpc';
 import { z } from 'zod';
 import { gptResponse } from '@/lib/open-ai';
 import { db } from '@/lib/db';
-import { MessageKind } from './get-messages';
+import { MessageType } from '@/trpc/server/procedures/get-messages';
+
+
+
+const PostQuestionInput = z.object({
+  question: z.string(),
+})
+
+const PostQuestionOutPut = z.object({
+  answer: z.string(),
+})
 
 export const postQuestion = privateProcedure
-  .input(
-    z.object({
-      question: z.string(),
-    })
-  )
-  .output(
-    z.object({
-      answer: z.string(),
-    })
-  )
+  .input(PostQuestionInput)
+  .output(PostQuestionOutPut)
   .mutation(async (opts) => {
     const question = opts.input.question;
+    const userId = opts.ctx.userId;
+    const kind = MessageType.QUESTION;
     const answer = await gptResponse(question);
-    const user = opts.ctx.userId;
     await db.message.create({
       data: {
-        kind: MessageKind.QUESTION,
+        kind,
+        userId,
         content: question,
-        userId: user,
       },
     });
-
+   
     await db.message.create({
       data: {
-        kind: MessageKind.ANSWER,
+        kind: MessageType.ANSWER,
         content: answer ? answer : '',
-        userId: user,
+        userId: userId,
       },
     });
     return {

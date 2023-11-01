@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { privateProcedure, publicProcedure } from '@/trpc/server/trpc';
 import { z } from 'zod';
 
-export enum MessageKind {
+export enum MessageType {
   QUESTION = 'QUESTION',
   ANSWER = 'ANSWER',
 }
@@ -12,7 +12,7 @@ export const getMessages = privateProcedure
     z.array(
       z.object({
         id: z.number(),
-        kind: z.enum([MessageKind.QUESTION, MessageKind.ANSWER]),
+        kind: z.enum([MessageType.QUESTION, MessageType.ANSWER]),
         content: z.string(),
         createdAt: z.date(),
       })
@@ -29,8 +29,8 @@ export const getMessages = privateProcedure
         id: message.id,
         kind:
           message.kind === 'QUESTION'
-            ? MessageKind.QUESTION
-            : MessageKind.ANSWER,
+            ? MessageType.QUESTION
+            : MessageType.ANSWER,
         content: message.content,
         createdAt: message.createdAt,
       };
