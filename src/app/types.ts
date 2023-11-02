@@ -7,3 +7,8 @@ type Message = {
   content: MessageContent;
   kind: MessageKind;
 };
+
+type MessageThread = {
+  question: Message;
+  answers?: Message[];
+};

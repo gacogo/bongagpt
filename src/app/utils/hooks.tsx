@@ -6,6 +6,19 @@ const createMessage = (content: string, kind: MessageKind): Message => ({
   kind,
 });
 
+const createMessageThread = (question: Message): MessageThread => ({
+  question,
+  answers: [],
+});
+
+const addAnswerToThread = (
+  parentThread: MessageThread,
+  answer: Message
+): MessageThread => ({
+  ...parentThread,
+  answers: [...(parentThread.answers || []), answer],
+});
+
 const createQuestion = (content: MessageContent): Message =>
   createMessage(content, 'QUESTION');
 
@@ -16,45 +29,47 @@ const createExceptionMessage = (content: MessageContent): Message =>
   createMessage(content, 'EXCEPTION');
 
 export const useMessages = () => {
-  let messageId = 0;
   const defaultQuestion = createQuestion('Question Thread');
   const defaultAnswer = createAnswer('Answer Thread');
 
-  const withId = <T extends Message>(value: T): T =>
-    ({ ...value, id: Date.now() } as T);
+  const withId = <T extends Message>(value: T, id: number = Date.now()): T =>
+    ({ ...value, id: id } as T);
 
-  const [messages, setMessages] = useState<Message[]>([
-    withId(defaultQuestion),
-    withId(defaultAnswer),
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageThreads, setMessageThreads] = useState<MessageThread[]>([]);
+
+  const addMessageThread = (newMsgThread: MessageThread) =>
+    setMessageThreads((oldThreads) => [...oldThreads, newMsgThread]);
 
   const addMessage = (
     createMessagefunc: (content: MessageContent) => Message,
-    content: MessageContent
+    content: MessageContent,
+    id?: number
   ) =>
     setMessages((oldMessages) => [
       ...oldMessages,
-      withId(createMessagefunc(content)),
+      withId(createMessagefunc(content), id),
     ]);
 
-  const addQuestion = (content: MessageContent) =>
-    addMessage(createQuestion, content);
+  const addQuestion = (content: MessageContent, id?: number) =>
+    addMessage(createQuestion, content, id);
 
-  const addAnswer = (content: MessageContent) =>
-    addMessage(createAnswer, content);
+  const addAnswer = (content: MessageContent, id?: number) =>
+    addMessage(createAnswer, content, id);
   //todo default exception?
+
   const addExceptionMessage = (content: MessageContent) =>
     addMessage(createExceptionMessage, content);
 
   return {
+    messageThreads,
+    createMessageThread,
+    addAnswerToThread,
+    addMessageThread,
     messages,
     addMessage,
-    setMessages,
     addQuestion,
     addAnswer,
-    addExceptionMessage,
-    defaultQuestion,
-    defaultAnswer,
   };
 };
 
