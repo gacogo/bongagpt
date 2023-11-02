@@ -1,7 +1,13 @@
 'use client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react';
+import {
+  ChangeEvent,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { cn } from '@/lib/utils';
 import { useMessages, useLocalStorage } from '@/app/utils/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,11 +42,14 @@ export default function Home() {
 
   const handleKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onSubmit();
+      onSubmit(event as any);
     }
   };
 
-  const onSubmit = () => {
+  const onSubmit = (
+    event: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLInputElement>
+  ) => {
+    event.preventDefault();
     if (questionInput.trim() !== '') {
       console.log(questionInput);
       addQuestion(questionInput);
@@ -92,17 +101,20 @@ export default function Home() {
           <Skeleton className='h-8 rounded-full'>loading...</Skeleton>
         )}
       </div>
-      <div className='flex gap-2'>
-        <Input
-          type='text'
-          value={questionInput}
-          onChange={onInput}
-          onKeyUp={handleKeyUp}
-        />
-        <Button variant='outline' className='px-8' onClick={onSubmit}>
-          Send
-        </Button>
-      </div>
+
+      <form onSubmit={onSubmit}>
+        <div className='flex  gap-2'>
+          <Input
+            type='text'
+            value={questionInput}
+            onChange={onInput}
+            onKeyUp={handleKeyUp}
+          />
+          <Button variant='outline' className='px-8' type='submit'>
+            Send
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
