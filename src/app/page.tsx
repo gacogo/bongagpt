@@ -9,22 +9,30 @@ import { trpc } from '@/trpc/client/trpc-client';
 import Link from 'next/link';
 
 export default function Home() {
-  const { addQuestion, addAnswer } = useMessages();
-
+  const { addQuestion, addAnswer, messages } = useMessages();
+  const [questionInput, setQuestionInput] = useState<string>('');
+  const onInput = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuestionInput(event.target.value);
+  };
   const userQuery = trpc.getUser.useQuery();
   const messagesQuery = trpc.getMessages.useQuery();
   const postQuestionMutation = trpc.postQuestion.useMutation({
     onSuccess({ answer }) {
-      // addAnswer(answer);
-      console.log(answer);
-      messagesQuery.refetch();
+      console.log(answer.content);
+      addAnswer(answer.content, answer.id);
     },
   });
 
-  const [question, setQuestion] = useState<string>('');
-  const onInput = (event: ChangeEvent<HTMLInputElement>) => {
-    setQuestion(event.target.value);
-  };
+  useEffect(() => {
+    if (userQuery?.data) {
+      messagesQuery.data?.forEach((message) => {
+        addQuestion(message.question, message.id);
+        message.answers.forEach((answer) => {
+          addAnswer(answer.content, answer.id);
+        });
+      });
+    }
+  }, [userQuery?.data]);
 
   const handleKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -32,11 +40,12 @@ export default function Home() {
     }
   };
 
-  const onSubmit = async () => {
-    if (question.trim() !== '') {
-      addQuestion(question);
-      setQuestion('');
-      postQuestionMutation.mutate({ question });
+  const onSubmit = () => {
+    if (questionInput.trim() !== '') {
+      console.log(questionInput);
+      addQuestion(questionInput);
+      setQuestionInput('');
+      postQuestionMutation.mutate({ question: questionInput });
     }
   };
 
@@ -44,8 +53,8 @@ export default function Home() {
     <div className='flex flex-col min-h-screen p-4 gap-2'>
       <div className='flex justify-end'>
         {userQuery?.data ? (
-          <div>
-            {userQuery.data.name}
+          <div className='flex p-8 rounded gap-2'>
+            <div> Hello {userQuery.data.name} </div>
             <Button asChild>
               <Link href='/session/signout'>Sign Out</Link>
             </Button>
@@ -57,34 +66,36 @@ export default function Home() {
         )}
       </div>
       <div className='flex flex-grow flex-col gap border-zinc border-2 rounded p-10'>
-        {messagesQuery.data?.map((message) => (
+        {messages.map((message) => (
           <div
             className={cn('flex flex-col rounded p-2 gap-4')}
             key={message.id}
           >
             <div className={cn('self-start bg-gray-700 p-2 rounded')}>
-              {message.question}
+              {message.content}
             </div>
-            {message.answers.map((answer) => (
+            {/*{message.answers.map((answer) => (
               <div
-                className={cn('flex bg-gray-700 p-4 justify-end border gap-2')}
+                className={cn(
+                  'flex flex-grow bg-gray-700 p-4 justify-end border gap-2'
+                )}
                 key={answer.id}
               >
                 {' '}
                 {answer.content}{' '}
               </div>
-            ))}
+                ))}*/}
           </div>
         ))}
 
         {postQuestionMutation.isLoading && (
-          <Skeleton className='h-4 rounded-full' />
+          <Skeleton className='h-8 rounded-full'>loading...</Skeleton>
         )}
       </div>
       <div className='flex gap-2'>
         <Input
           type='text'
-          value={question}
+          value={questionInput}
           onChange={onInput}
           onKeyUp={handleKeyUp}
         />

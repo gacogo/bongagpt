@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const createMessage = (content: string, kind: MessageKind): Message => ({
-  id: 0,
+  id: '0',
   content,
   kind,
 });
@@ -29,11 +29,10 @@ const createExceptionMessage = (content: MessageContent): Message =>
   createMessage(content, 'EXCEPTION');
 
 export const useMessages = () => {
-  const defaultQuestion = createQuestion('Question Thread');
-  const defaultAnswer = createAnswer('Answer Thread');
-
-  const withId = <T extends Message>(value: T, id: number = Date.now()): T =>
-    ({ ...value, id: id } as T);
+  const withId = <T extends Message>(
+    value: T,
+    id: string = Date.now().toString()
+  ): T => ({ ...value, id: id } as T);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageThreads, setMessageThreads] = useState<MessageThread[]>([]);
@@ -44,18 +43,18 @@ export const useMessages = () => {
   const addMessage = (
     createMessagefunc: (content: MessageContent) => Message,
     content: MessageContent,
-    id?: number
+    id?: string
   ) =>
     setMessages((oldMessages) => [
       ...oldMessages,
       withId(createMessagefunc(content), id),
     ]);
 
-  const addQuestion = (content: MessageContent, id?: number) =>
-    addMessage(createQuestion, content, id);
+  const addQuestion = (content: MessageContent, id: number = Date.now()) =>
+    addMessage(createQuestion, content, `question${id}`);
 
   const addAnswer = (content: MessageContent, id?: number) =>
-    addMessage(createAnswer, content, id);
+    addMessage(createAnswer, content, `answer${id}`);
   //todo default exception?
 
   const addExceptionMessage = (content: MessageContent) =>

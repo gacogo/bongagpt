@@ -1,6 +1,6 @@
 type MessageContent = string;
 type MessageKind = 'QUESTION' | 'ANSWER' | 'EXCEPTION';
-type MessageKey = number;
+type MessageKey = string;
 
 type Message = {
   id: MessageKey;

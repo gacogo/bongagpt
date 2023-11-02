@@ -8,7 +8,11 @@ const PostQuestionInput = z.object({
 });
 
 const PostQuestionOutPut = z.object({
-  answer: z.string(),
+  answer: z.object({
+    content: z.string(),
+    userId: z.string(),
+    id: z.number(),
+  }),
 });
 
 export const postQuestion = privateProcedure
@@ -17,7 +21,7 @@ export const postQuestion = privateProcedure
   .mutation(async (opts) => {
     const question = opts.input.question;
     const userId = opts.ctx.userId;
-    const answer = await gptResponse(question);
+    const gptAnswer = await gptResponse(question);
     const postedQuestion = await db.question.create({
       data: {
         userId,
@@ -25,9 +29,9 @@ export const postQuestion = privateProcedure
       },
     });
 
-    await db.answer.create({
+    const postedAnswer = await db.answer.create({
       data: {
-        content: answer ? answer : '',
+        content: gptAnswer ? gptAnswer : '',
         userId,
         question: {
           connect: {
@@ -37,6 +41,10 @@ export const postQuestion = privateProcedure
       },
     });
     return {
-      answer: answer ?? '',
+      answer: {
+        content: postedAnswer.content,
+        userId: postedAnswer.userId,
+        id: postedAnswer.id,
+      },
     };
   });
