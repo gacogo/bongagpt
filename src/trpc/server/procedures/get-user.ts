@@ -6,7 +6,8 @@ export const getUser = publicProcedure
   .output(
     z
       .object({
-        name: z.string(),
+        name: z.string().nullable(),
+        kindeUserId: z.string(),
       })
       .nullable()
   )
@@ -16,6 +17,7 @@ export const getUser = publicProcedure
     const user = getUser();
     if (!user.id) return null;
     return {
-      name: user.given_name ?? user.family_name ?? user.id,
+      name: user.given_name ?? user.family_name ?? 'Guest',
+      kindeUserId: user.id,
     };
   });
