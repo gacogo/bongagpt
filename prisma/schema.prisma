@@ -6,34 +6,50 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
+
+model Customer {
+  id               Int             @id @default(autoincrement())
+  kindeUserId      String
+  stripeCustomerId String          @unique
+  email            String
+  Subscriptions    Subscriptions[]
+}
+
+model Subscriptions {
+  id       Int      @id @default(autoincrement())
+  stripeId String
+  customer Customer @relation(fields: [stripeId], references: [stripeCustomerId])
+}
+
 model Question {
-  id Int @id @default(autoincrement())
-  content String
+  id        Int      @id @default(autoincrement())
+  content   String
   createdAt DateTime @default(now())
-  userId  String
-  answers Answer[]
+  userId    String
+  answers   Answer[]
 }
 
 model Answer {
-  id Int @id @default(autoincrement())
-  content String
-  createdAt DateTime @default(now())
-  userId  String
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  userId     String
   questionId Int
-  question Question @relation(fields: [questionId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id])
 }
+
 model Message {
-  id Int @id @default(autoincrement())
-  kind  String
-  content String
-  createdAt DateTime @default(now())
-  userId  String
-  questionId Int? @unique
-  answerId Int? @unique
-  question Message? @relation("QuestionAnswers", fields: [questionId], references: [id])
-  answer Message? @relation("QuestionAnswers")
+  id         Int      @id @default(autoincrement())
+  kind       String
+  content    String
+  createdAt  DateTime @default(now())
+  userId     String
+  questionId Int?     @unique
+  answerId   Int?     @unique
+  question   Message? @relation("QuestionAnswers", fields: [questionId], references: [id])
+  answer     Message? @relation("QuestionAnswers")
 }
